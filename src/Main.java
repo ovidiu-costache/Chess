@@ -1,7 +1,10 @@
 package src;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import java.io.IOException;
+import java.io.PipedOutputStream;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +36,29 @@ public class Main {
     }
 
     public void write() {
-        // Will be implemented
+        JSONArray userList = new JSONArray();
+
+        for (Account acc : this.users) {
+            JSONObject userObj = new JSONObject();
+
+            userObj.put("email", acc.getEmail());
+            userObj.put("password", acc.getPassword());
+            userObj.put("points", acc.getPoints());
+
+            JSONArray gamesList = new JSONArray();
+            for (Game game : acc.getGames())
+                gamesList.add(game.getId());
+            userObj.put("games", gamesList);
+            userList.add(userObj);
+        }
+
+        try (java.io.FileWriter file = new java.io.FileWriter("input/accounts.json")) {
+            file.write(userList.toJSONString());
+            file.flush();
+            System.out.println("Datele au fost salvate cu succes!");
+        } catch (IOException e) {
+            System.out.println("Eroare la salvarea datelor: " + e.getMessage());
+        }
     }
 
     public Account login(String email, String password) {
@@ -55,6 +80,8 @@ public class Main {
 
         this.users.add(newUser);
         this.currentUser = newUser;
+
+        write();
 
         System.out.println("Cont creat pentru " + email);
         return newUser;
@@ -118,8 +145,38 @@ public class Main {
                             System.out.println("Incepe un joc nou ...");
                             Game newGame = new Game();
                             newGame.getBoard().initialize();
-                            System.out.println(newGame.getBoard().toString());
-                            // Will be implemented
+
+                            boolean gameRunning = true;
+                            while (gameRunning) {
+                                System.out.println(newGame.getBoard().toString());
+                                System.out.println("Mutarea viitoare: (ex. A2-A3) sau alege EXIT");
+                                String input = scanner.nextLine();
+
+                                if (input.equalsIgnoreCase("EXIT")) {
+                                    gameRunning = false;
+                                    break;
+                                }
+
+                                if (input.length() == 5 && input.charAt(2) == '-') {
+                                    // Start postion
+                                    char col1 = input.charAt(0);
+                                    int row1 = Integer.parseInt(String.valueOf(input.charAt(1)));
+                                    Position from = new Position(col1, row1);
+
+                                    // Final position
+                                    char col2 = input.charAt(3);
+                                    int row2 = Integer.parseInt(String.valueOf(input.charAt(4)));
+                                    Position to = new Position(col2, row2);
+
+                                    if (newGame.getBoard().isValidMove(from, to)) {
+                                        newGame.getBoard().movePiece(from, to);
+                                        System.out.println("Mutarea a fost efectuata!");
+                                    } else {
+                                        System.out.println("Formatul este gresit! EXEMPLU: A2-A3 (pozitie actuala - pozitie finala)");
+                                    }
+                                }
+                            }
+
                             break;
                         case 2:
                             System.out.println("Jocurile tale: " + currentUser.getGames().size());

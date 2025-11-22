@@ -1,5 +1,6 @@
 package src;
 
+import java.util.List;
 import java.util.TreeSet;
 import java.util.Iterator;
 
@@ -82,7 +83,14 @@ public class Board {
     }
 
     public void movePiece(Position from, Position to) {
-        // Will be implemented
+        Piece piece = getPieceAt(from);
+        removePieceAt(from);
+
+        if (getPieceAt(to) != null)
+            removePieceAt(to);
+
+        piece.setPosition(to);
+        add(piece);
     }
 
     public Piece getPieceAt(Position position) {
@@ -93,8 +101,21 @@ public class Board {
     }
 
     public boolean isValidMove(Position from, Position to) {
-        // Will be implemented
-        return true;
+        Piece piece = getPieceAt(from);
+
+        if (piece == null) {
+            System.out.println("Nu exista piesa la pozotia " + from);
+            return false;
+        }
+
+        // Where could the piece move?
+        List<Position> possibleMove = piece.getPossibleMoves(this);
+        for (Position pos : possibleMove)
+            if (pos.equals(to))
+                return true;
+
+        System.out.println("Mutare invalida pentru " + piece.type());
+        return false;
     }
 
     public void add(Piece piece) {
